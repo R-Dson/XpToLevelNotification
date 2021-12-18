@@ -1,13 +1,13 @@
-package com.example;
+package xptolevelnotification;
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
 
-public class ExamplePluginTest
+public class XpToLevelNotificationPluginTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		ExternalPluginManager.loadBuiltin(ExamplePlugin.class);
+		ExternalPluginManager.loadBuiltin(XpToLevelNotificationPlugin.class);
 		RuneLite.main(args);
 	}
 }
