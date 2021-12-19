@@ -63,17 +63,17 @@ public class XpToLevelNotificationPlugin extends Plugin
 			int xpDelta = xpNextLevel - currentXp;
 			Instant skillInstant = skillDelay.get(skillName);
 
-			if (skillInstant == null || Instant.now().isAfter(skillInstant))
-			{
-				skillDelay.put(skillName, Instant.now().plusSeconds(notificationDelay));
-			}
-			else
-			{
-				return;
-			}
-
 			if (xpDelta < xpThreshold)
 			{
+				if (skillInstant == null || Instant.now().isAfter(skillInstant))
+				{
+					skillDelay.put(skillName, Instant.now().plusSeconds(notificationDelay));
+				}
+				else
+				{
+					return;
+				}
+
 				notifier.notify("XP left to level: " + xpDelta + " in " + skillName);
 			}
 		}
