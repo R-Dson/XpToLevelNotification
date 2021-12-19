@@ -1,4 +1,4 @@
-package xptolevelnotification;
+package com.xptolevelnotification;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
@@ -7,7 +7,7 @@ import net.runelite.client.config.ConfigItem;
 @ConfigGroup(XpToLevelNotificationConfig.GROUP)
 public interface XpToLevelNotificationConfig extends Config
 {
-	String GROUP = "xptolevelnotification";
+	String GROUP = "com/xptolevelnotification";
 
 	@ConfigItem(
 			keyName = "xpNotificationEnable",
