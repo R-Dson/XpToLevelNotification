@@ -1,4 +1,4 @@
-package com.xptolevelnotification;
+package com.vanillj.xptolevelnotification;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
@@ -7,24 +7,13 @@ import net.runelite.client.config.ConfigItem;
 @ConfigGroup(XpToLevelNotificationConfig.GROUP)
 public interface XpToLevelNotificationConfig extends Config
 {
-	String GROUP = "com/xptolevelnotification";
-
-	@ConfigItem(
-			keyName = "xpNotificationEnable",
-			name = "Enable/Disable xp notification",
-			description = "Enable or disable the XP notification.",
-			position = 0
-	)
-	default boolean xpEnable()
-	{
-		return true;
-	}
+	String GROUP = "xptolevelnotification";
 
 	@ConfigItem(
 			keyName = "xpThreshold",
-			name = "The XP Threshold",
+			name = "XP Threshold",
 			description = "When to trigger the XP notification.",
-			position = 1
+			position = 0
 	)
 	default int xpThreshold()
 	{

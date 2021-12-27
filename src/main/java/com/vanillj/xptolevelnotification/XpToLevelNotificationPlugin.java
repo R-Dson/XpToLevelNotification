@@ -1,4 +1,4 @@
-package com.xptolevelnotification;
+package com.vanillj.xptolevelnotification;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
@@ -53,7 +53,7 @@ public class XpToLevelNotificationPlugin extends Plugin
 	public void onStatChanged(StatChanged statChanged)
 	{
 		// 5 tick delay to prevent login stat changes
-		if (config.xpEnable() && client.getTickCount() > 5)
+		if (client.getTickCount() > 5)
 		{
 			final String skillName = statChanged.getSkill().getName();
 			final int currentXp = statChanged.getXp();
@@ -63,11 +63,18 @@ public class XpToLevelNotificationPlugin extends Plugin
 			int xpDelta = xpNextLevel - currentXp;
 			Instant skillInstant = skillDelay.get(skillName);
 
+			if (skillInstant != null && Instant.now().isAfter(skillInstant))
+			{
+				skillDelay.remove(skillName);
+				log.debug("Removing notification delay for: " + skillName);
+			}
+
 			if (xpDelta < xpThreshold)
 			{
-				if (skillInstant == null || Instant.now().isAfter(skillInstant))
+				if (skillDelay.get(skillName) == null)
 				{
 					skillDelay.put(skillName, Instant.now().plusSeconds(notificationDelay));
+					log.debug("Next notification time: "+ Instant.now().plusSeconds(notificationDelay).toString());
 				}
 				else
 				{

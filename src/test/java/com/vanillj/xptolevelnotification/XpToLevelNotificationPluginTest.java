@@ -1,5 +1,6 @@
-package com.xptolevelnotification;
+package com.vanillj.xptolevelnotification;
 
+import com.vanillj.xptolevelnotification.XpToLevelNotificationPlugin;
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
 
