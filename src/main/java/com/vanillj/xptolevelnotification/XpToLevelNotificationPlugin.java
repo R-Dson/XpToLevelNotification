@@ -5,6 +5,8 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
+import net.runelite.api.GameState;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
@@ -52,37 +54,30 @@ public class XpToLevelNotificationPlugin extends Plugin
 	@Subscribe
 	public void onStatChanged(StatChanged statChanged)
 	{
-		// 5 tick delay to prevent login stat changes
-		if (client.getTickCount() > 5)
+		final String skillName = statChanged.getSkill().getName();
+
+		if (!skillDelay.containsKey(skillName))
 		{
-			final String skillName = statChanged.getSkill().getName();
-			final int currentXp = statChanged.getXp();
-			final int currentLevel = statChanged.getLevel();
-			final int xpNextLevel = currentLevel + 1 <= Experience.MAX_VIRT_LEVEL ? Experience.getXpForLevel(currentLevel + 1) : Experience.MAX_SKILL_XP;
+			skillDelay.put(skillName, Instant.now().plusSeconds(-1));
+			return;
+		}
 
-			int xpDelta = xpNextLevel - currentXp;
-			Instant skillInstant = skillDelay.get(skillName);
+		final int currentXp = statChanged.getXp();
+		final int currentLevel = Experience.getLevelForXp(currentXp);
+		final int xpNextLevel = currentLevel + 1 <= Experience.MAX_VIRT_LEVEL ? Experience.getXpForLevel(currentLevel + 1) : Experience.MAX_SKILL_XP;
 
-			if (skillInstant != null && Instant.now().isAfter(skillInstant))
-			{
-				skillDelay.remove(skillName);
-				log.debug("Removing notification delay for: " + skillName);
-			}
+		final int xpDelta = xpNextLevel - currentXp;
 
-			if (xpDelta < xpThreshold)
-			{
-				if (skillDelay.get(skillName) == null)
-				{
-					skillDelay.put(skillName, Instant.now().plusSeconds(notificationDelay));
-					log.debug("Next notification time: "+ Instant.now().plusSeconds(notificationDelay).toString());
-				}
-				else
-				{
-					return;
-				}
+		if (Instant.now().isBefore(skillDelay.get(skillName)))
+		{
+			return;
+		}
 
-				notifier.notify("XP left to level: " + xpDelta + " in " + skillName);
-			}
+		if (xpDelta < xpThreshold)
+		{
+			skillDelay.put(skillName, Instant.now().plusSeconds(notificationDelay));
+			log.debug("Next notification time: "+ Instant.now().plusSeconds(notificationDelay).toString());
+			notifier.notify("XP left to level: " + xpDelta + " in " + skillName);
 		}
 	}
 
