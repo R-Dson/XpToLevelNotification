@@ -55,6 +55,12 @@ public class XpToLevelNotificationPlugin extends Plugin
 	public void onStatChanged(StatChanged statChanged)
 	{
 		final String skillName = statChanged.getSkill().getName();
+		final int currentXp = statChanged.getXp();
+
+		if (currentXp >= Experience.MAX_SKILL_XP)
+		{
+			return;
+		}
 
 		if (!skillDelay.containsKey(skillName))
 		{
@@ -62,11 +68,15 @@ public class XpToLevelNotificationPlugin extends Plugin
 			return;
 		}
 
-		final int currentXp = statChanged.getXp();
 		final int currentLevel = Experience.getLevelForXp(currentXp);
 		final int xpNextLevel = currentLevel + 1 <= Experience.MAX_VIRT_LEVEL ? Experience.getXpForLevel(currentLevel + 1) : Experience.MAX_SKILL_XP;
 
 		final int xpDelta = xpNextLevel - currentXp;
+
+		if (xpDelta <= 0)
+		{
+			return;
+		}
 
 		if (Instant.now().isBefore(skillDelay.get(skillName)))
 		{
