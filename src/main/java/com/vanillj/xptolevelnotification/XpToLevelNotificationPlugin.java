@@ -11,12 +11,12 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @PluginDescriptor(
@@ -24,9 +24,7 @@ import java.util.HashMap;
 )
 public class XpToLevelNotificationPlugin extends Plugin
 {
-	private int xpThreshold;
-	private int notificationDelay;
-	private HashMap<String, Instant> skillDelay;
+	private final Map<String, Instant> skillDelay = new HashMap<>();
 
 	@Inject
 	private Client client;
@@ -38,23 +36,29 @@ public class XpToLevelNotificationPlugin extends Plugin
 	private Notifier notifier;
 
 	@Override
-	protected void startUp() throws Exception
+	protected void startUp()
 	{
-		xpThreshold = config.xpThreshold();
-		notificationDelay = 60 * config.xpNotificationDelay();
-		skillDelay = new HashMap<>();
+		skillDelay.clear();
 	}
 
 	@Override
-	protected void shutDown() throws Exception
+	protected void shutDown()
 	{
+		skillDelay.clear();
+	}
 
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		if (event.getGameState() == GameState.LOGIN_SCREEN)
+		{
+			skillDelay.clear();
+		}
 	}
 
 	@Subscribe
 	public void onStatChanged(StatChanged statChanged)
 	{
-		final String skillName = statChanged.getSkill().getName();
 		final int currentXp = statChanged.getXp();
 
 		if (currentXp >= Experience.MAX_SKILL_XP)
@@ -62,14 +66,23 @@ public class XpToLevelNotificationPlugin extends Plugin
 			return;
 		}
 
-		if (!skillDelay.containsKey(skillName))
+		final String skillName = statChanged.getSkill().getName();
+
+		Instant nextNotification = skillDelay.putIfAbsent(skillName, Instant.EPOCH);
+		if (nextNotification == null)
 		{
-			skillDelay.put(skillName, Instant.now().plusSeconds(-1));
+			return;
+		}
+
+		if (Instant.now().isBefore(nextNotification))
+		{
 			return;
 		}
 
 		final int currentLevel = Experience.getLevelForXp(currentXp);
-		final int xpNextLevel = currentLevel + 1 <= Experience.MAX_VIRT_LEVEL ? Experience.getXpForLevel(currentLevel + 1) : Experience.MAX_SKILL_XP;
+		final int xpNextLevel = currentLevel + 1 <= Experience.MAX_VIRT_LEVEL 
+				? Experience.getXpForLevel(currentLevel + 1) 
+				: Experience.MAX_SKILL_XP;
 
 		final int xpDelta = xpNextLevel - currentXp;
 
@@ -78,36 +91,15 @@ public class XpToLevelNotificationPlugin extends Plugin
 			return;
 		}
 
-		if (Instant.now().isBefore(skillDelay.get(skillName)))
+		if (xpDelta < config.xpThreshold())
 		{
-			return;
-		}
-
-		if (xpDelta < xpThreshold)
-		{
-			skillDelay.put(skillName, Instant.now().plusSeconds(notificationDelay));
-			log.debug("Next notification time: "+ Instant.now().plusSeconds(notificationDelay).toString());
+			int delaySeconds = 60 * config.xpNotificationDelay();
+			Instant newNotificationTime = Instant.now().plusSeconds(delaySeconds);
+			
+			skillDelay.put(skillName, newNotificationTime);
+			
+			log.debug("Next notification time: {}", newNotificationTime);
 			notifier.notify("XP left to level: " + xpDelta + " in " + skillName);
-		}
-	}
-
-	@Subscribe
-	public void onConfigChanged(ConfigChanged event)
-	{
-		if (!event.getGroup().equals(XpToLevelNotificationConfig.GROUP))
-		{
-			return;
-		}
-
-		if (config.xpThreshold() != xpThreshold)
-		{
-			xpThreshold = config.xpThreshold();
-		}
-
-		if (config.xpNotificationDelay() != notificationDelay)
-		{
-			notificationDelay = 60 * config.xpNotificationDelay();
-			skillDelay.clear();
 		}
 	}
 
