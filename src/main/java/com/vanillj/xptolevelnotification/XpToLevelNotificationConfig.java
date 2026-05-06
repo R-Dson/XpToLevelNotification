@@ -3,12 +3,15 @@ package com.vanillj.xptolevelnotification;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.Range;
+import net.runelite.client.config.Units;
 
 @ConfigGroup(XpToLevelNotificationConfig.GROUP)
 public interface XpToLevelNotificationConfig extends Config
 {
 	String GROUP = "xptolevelnotification";
 
+	@Range(min = 1)
 	@ConfigItem(
 			keyName = "xpThreshold",
 			name = "XP Threshold",
@@ -20,9 +23,11 @@ public interface XpToLevelNotificationConfig extends Config
 		return 5000;
 	}
 
+	@Range(min = 0)
+	@Units(Units.MINUTES)
 	@ConfigItem(
 			keyName = "xpDelay",
-			name = "Notification delay (minutes)",
+			name = "Notification delay",
 			description = "The delay until a notification can be sent again for a skill. This prevents spamming.",
 			position = 1
 	)
